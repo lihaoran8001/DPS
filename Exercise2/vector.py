@@ -5,13 +5,14 @@ import _thread
 # author: Haoran
 class Process:
 	pid = 0  # process id
-	lclock = 0  # local clock
+	lclock = dict()  # local clock, use dictonary as vector
 	enum = 0  # event number
 	stat = 0  # process status
 
 	def __init__(self, pid, enum):
 		self.pid = pid
 		self.enum = enum
+		self.lclock = {self.pid:0}
 		self.stat = 1  # activate process
 
 	def run(self):
@@ -28,8 +29,10 @@ class Process:
 		random.choice(event_list)()
 
 	def execute_local_event(self):
-		self.lclock += 1
-		print('Process',self.pid, '(', self.lclock, ') executed a local event')
+		self.lclock[self.pid] += 1
+		c1 = self.lclock.get(1, 0)
+		c2 = self.lclock.get(2, 0)
+		print('Process',self.pid, '(', c1, c2, ') executed a local event')
 		
 
 	def send(self):
@@ -41,14 +44,19 @@ class Process:
 		if target.stat == 0:
 			self.execute_event()
 		else:
-			self.lclock += 1
+			self.lclock[self.pid] += 1
 			msg = 'sending...'
-			print('Process', self.pid, '(', self.lclock, '): send to', target.pid)
-			target.receive(msg, self.lclock, self.pid)  # call the target's receive func to simulate sending
+			c1 = self.lclock.get(1, 0)
+			c2 = self.lclock.get(2, 0)
+			print('Process', self.pid, '(', c1, c2, '): send to', target.pid)
+			target.receive(msg, self.lclock[self.pid], self.pid)  # call the target's receive func to simulate sending
 
 	def receive(self, msg, clock, s_pid):
-		self.lclock = max(self.lclock, clock) + 1
-		print('Process', self.pid, '(', self.lclock, '): recive from', s_pid)
+		self.lclock[self.pid] += 1
+		self.lclock[s_pid] = clock
+		c1 = self.lclock.get(1, 0)
+		c2 = self.lclock.get(2, 0)
+		print('Process', self.pid, '(', c1, c2, '): recive from', s_pid)
 		
 def run_process(p):
 	p.run()
